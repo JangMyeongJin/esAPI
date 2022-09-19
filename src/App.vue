@@ -4,9 +4,6 @@
     <app-header></app-header>
 
     <div class="layout-contents">
-
-      <!-- <search-form v-bind:APISERVER="APIserver" v-bind:INDEXLIST="indexList"></search-form> -->
-
       <div class="common-box2 portal-search">
         <div class="portal-search-label response-hide"><img src="../images/common/icon_portal_search.png" alt="My Image"
             style="position:absolute;left:40px;">SEARCH</div>
@@ -21,31 +18,59 @@
                 <option v-for="(item, i) in indexList" v-bind:key="i" :value="item" >{{ item }}</option>
               </select>
 
-              <input type="search" id="query" class="total_search" input:value="query" @input="inputQuery"
+              <input type="search" id="query" class="total_search" input:value="setQuery" @input="inputQuery" @focusin="autoShow" @focusout="autoHide"
                 autocomplete="off" style="outline-width: 0; width:400px;">
-              <button id="searchbtn" class="common-btn btn-color-normal portal-search-btn response-block">검색</button>
-              <button id="detail_search" class="common-btn detail_search">상세검색</button>
+              <button id="searchbtn" class="common-btn btn-color-normal portal-search-btn response-block" @click.self.prevent="goSearch">검색</button>
+              <button id="detail_search" class="common-btn detail_search" @click.self.prevent="changeDetail">상세검색</button> <!--클릭할 때 submit 안되게 하려면 click.self.prevent-->
             </fieldset>
           </form>
         </div>
       </div>
 
       <!-- autokeyword -->
-      <auto-keyword ref="autoQuery" v-bind:APISERVER="APIserver"></auto-keyword>
+      <auto-keyword ref="autoQuery" v-bind:APISERVER="APIserver" @goKeywordSearch="goKeywordSearch" v-show="auto"></auto-keyword>
 
       <!-- detailbox -->
-      <div id="detailbox" class="detailbox" style="display:none">
+      <div id="detailbox" class="detailbox" v-show="detail">
+        <div class="innerbox">
+          <div class="listbox">
+            <ul>
+              <li class="item list">
+                <span class="item title"><h4>검색기간</h4></span>
 
+                <input type="text" id="sDate" class="sDate" v-model="sDate" autocomplete="off" > ~ <input type="text" id="eDate" class="eDate" v-model="eDate" autocomplete="off">
+
+                <input type="radio" id="dateAll" name="date" @click="changeDate" value="TOTAL"  ><label for="dateAll">전체기간</label>
+                <input type="radio" id="dateYear" name="date" @click="changeDate" value="year"><label for="dateYear">1년</label>
+                <input type="radio" id="dateMonth" name="date" @click="changeDate" value="month"><label for="dateMonth">1개월</label>
+                <input type="radio" id="dateWeek" name="date" @click="changeDate" value="week"><label for="dateWeek">1주</label>
+              </li>
+              <li class="item list">
+                <span class="item title"><h4>검색범위</h4></span>
+                <input type="checkbox" id="rangeAll" name="sfield"     v-model="sfieldTOTAL"  ><label for="rangeAll">전체</label>
+                <input type="checkbox" id="rangeSubject" name="sfield" v-model="sfieldList" value="subject"><label for="rangeSubject">제목</label>
+                <input type="checkbox" id="rangeContent" name="sfield" v-model="sfieldList" value="content"><label for="rangeContent">본문</label>
+                <input type="checkbox" id="rangeFile" name="sfield"    v-model="sfieldList" value="file_nm"><label for="rangeFile">첨부파일</label>
+              </li>
+              <li class="item list">
+                <span class="item title"><h4>정렬방식</h4></span>
+                <input type="radio" id="sortScore" name="sort" @click="changeSort" value="SCORE/DESC"><label for="sortScore">정확도순</label>
+                <input type="radio" id="sortDateDESC" name="sort" @click="changeSort" value="acct_year/DESC"><label for="sortDateDESC">최신순</label>
+                <input type="radio" id="sortDateASC" name="sort" @click="changeSort" value="acct_year/ASC"><label for="sortDateASC">오래된순</label>
+              </li>
+            </ul>
+          </div>
+        </div>
       </div>
       <div class="portal-result">
         <div class="portal-result-length">
-          <br>"{{ showQuery }}"에 대한 전체 {{ totalCount }}건의 검색결과가 있습니다.
+          <br>"{{ realQuery }}"에 대한 전체 {{ totalCount }}건의 검색결과가 있습니다.
         </div>
         <div class="common-tabgroup response-tabgroup-column2">
-          <span :class="[searchIndex === 'TOTAL' ? 'on' : '']">
+          <span :class="[searchIndex == 'TOTAL' ? 'on' : '']">
             <a href="#" name="TOTAL" @click="goIndexSearch('TOTAL')" value="TOTAL">통합검색 ({{ totalCount }})</a>
           </span>
-          <span v-for="item in indexList" v-bind:key="item" :class="[searchIndex === item ? 'on' : '']" >
+          <span v-for="item in indexList" v-bind:key="item" :class="[searchIndex == item ? 'on' : '']" >
             <a href="#" :name="item" @click="goIndexSearch(item)">{{ item }} ({{}})</a>
           </span>
         </div>
@@ -55,7 +80,7 @@
 
       </div>
 
-      <app-side v-bind:mySearchKeyword="mySearchKeyword" @removeMyKeyword="removeMyKeyword"></app-side>
+      <app-side ref="appSide" v-bind:APISERVER="APIserver" @goKeywordSearch="goKeywordSearch"></app-side>
 
     </div>
 
@@ -63,10 +88,9 @@
 </template>
 
 <script>
-import lodash from 'lodash'
 import axios from 'axios'
-import AppHeader from './components/AppHeader.vue'
-import AppSide from './components/AppSide.vue'
+import AppHeader from './app-header/AppHeader.vue'
+import AppSide from './app-side/AppSide.vue'
 import ResultEntp from './components/result/ResultEntp.vue'
 import ResultData from './components/result/ResultData.vue'
 import AutoKeyword from './components/AutoKeyword.vue'
@@ -80,13 +104,25 @@ export default {
         1: 'data',
         2: 'entp'
       },
-      countList: {
 
-      },
-      query: '',
+      //parameter setting
+      setQuery: '',
       setSearchIndex: 'TOTAL',
+      setDate: 'TOTAL',
+      dateRangeField: '@acct_year,',
+      sDate:'',
+      eDate:'',
+      sfieldRange: '',
+      sfieldTOTAL: true,
+      sfieldList: [],
+      sortRange: 'SCORE/DESC',
+
+      //real parameter
       searchIndex: '',
-      showQuery: '',
+      realQuery: '',
+      dateRange: '',
+      sfield:'',
+      sort:'',
 
       totalSearch: '',
       totalCount: '',
@@ -94,11 +130,11 @@ export default {
       resultData: '',
       resultEntp: '',
 
-
+      auto: false,
+      detail: false
     }
   },
   components: {
-    // 'search-form': SearchForm,
     'app-header': AppHeader,
     'app-side': AppSide,
     'result-entp': ResultEntp,
@@ -112,20 +148,67 @@ export default {
       this.setSearchIndex = event.target.value
     },
     inputQuery: function(event) {
-      this.query = event.target.value
+      this.setQuery = event.target.value
     },
     goIndexSearch: function(idx){
       this.setSearchIndex = idx
       return this.goSearch()
+    },
+    autoShow: function() {
+      this.auto = true
+    },
+    autoHide: function() {
+      this.auto = false
+    },
+    changeDetail: function(){
+      if(this.detail) {
+        this.detail = false
+      }else if(!this.detail) {
+        this.detail = true
+      }
+    },
+    changeDate: function(event){
+      this.setDate = event.target.value
 
+      var now = new Date()
+      var today = new Date().toJSON().slice(0,10).replace(/-/g,'/')
+
+      if(this.setDate=='TOTAL'){
+        this.sDate = ''
+        this.eDate =''
+      }else if(this.setDate=='year') {
+        this.sDate = new Date(now.setFullYear(now.getFullYear() - 1)).toJSON().slice(0,10).replace(/-/g,'/')
+        this.eDate = today
+      }else if(this.setDate=='month'){
+        this.sDate = new Date(now.setMonth(now.getMonth() - 1)).toJSON().slice(0,10).replace(/-/g,'/')
+        this.eDate = today
+      }else if(this.setDate=='week'){
+        this.sDate = new Date(now.setDate(now.getDate() - 7)).toJSON().slice(0,10).replace(/-/g,'/')
+        this.eDate = today
+      }
+    },
+    changeSort: function(event) {
+      this.sortRange = event.target.value
     },
 
     //goSearch
     async goSearch() {
-      this.searchIndex = this.setSearchIndex
-      this.showQuery = this.query
 
-      var url = this.APIserver + this.APIurl + '?query=' + this.query + '&index=' + this.searchIndex
+      if(this.sfieldList.length > 0){
+        this.sfieldRange = ''
+        for(var field of this.sfieldList.values()){
+          this.sfieldRange += field + ','
+        }
+      }
+
+      this.searchIndex = this.setSearchIndex
+      this.realQuery = this.setQuery
+
+      this.dateRange = (this.sDate != '' && this.eDate != '') ? this.searchIndex + this.dateRangeField + this.sDate + ',' + this.eDate : ''
+      this.sfield = (this.sfieldTOTAL) ? '' : this.searchIndex + '@' + this.sfieldRange
+      this.sort = this.searchIndex + '@' + this.sortRange
+
+      var url = this.APIserver + this.APIurl + '?query=' + this.realQuery + '&index=' + this.searchIndex + '&daterange=' + this.dateRange + "&sfield=" + this.sfield + '&sort=' + this.sort
       var vm = this
       console.log(url)
       axios.get(url)
@@ -137,22 +220,18 @@ export default {
             vm.resultData = response.data.result[0]
             vm.resultEntp = response.data.result[1]
           }
-
           if(vm.searchIndex == 'data'){
             vm.resultData = response.data.result[0]
           }
-
           if(vm.searchIndex == 'entp'){
             vm.resultEntp = response.data.result[0]
           }
 
-
         })
-
         .catch(function (error) {
           console.log(error)
         })
-        this.getSearchMyKeyword(this.query, this.totalCount)
+
     },
 
     goKeywordSearch: function (query) {
@@ -162,98 +241,25 @@ export default {
     },
 
 
-    //쿠키값 조회
-    getCookie: function (c_name) {
-      var i, x, y, cookies = document.cookie.split(";");
-      for (i = 0; i < cookies.length; i++) {
-        x = cookies[i].substring(0, cookies[i].indexOf("="));
-        y = cookies[i].substring(cookies[i].indexOf("=") + 1);
-        x = x.replace(/^\s+|\s+$/g, "");
 
-        if (x == c_name) {
-          return lodash.unescape(y);
-        }
-      }
-    },
-    //쿠키값 설정
-    setCookie: function (c_name, value, exdays) {
-      var exdate = new Date();
-      exdate.setDate(exdate.getDate() + exdays);
-      var c_value = lodash.escape(value) + ((exdays == null) ? "" : "; expires=" + exdate.toUTCString());
-      document.cookie = c_name + "=" + c_value;
-    },
-
-    getSearchMyKeyword: function (keyword, totCount) {
-      var MYKEYWORD_COUNT = 10; //내가 찾은 검색어 갯수 + 1
-      var myKeyword = this.getCookie("mySearchKeyword");
-      if (myKeyword == null) {
-        myKeyword = "";
-      }
-
-      var myKeywords = myKeyword.split("^%");
-
-      if (totCount > 0) {
-        var existsKeyword = false;
-        for (var i = 0; i < myKeywords.length; i++) {
-          if (myKeywords[i] == keyword) {
-            existsKeyword = true;
-            break;
-          }
-        }
-
-        if (!existsKeyword) {
-          myKeywords.push(keyword);
-          if (myKeywords.length == MYKEYWORD_COUNT) {
-            myKeywords = myKeywords.slice(1, MYKEYWORD_COUNT);
-          }
-        }
-        this.setCookie("mySearchKeyword", myKeywords.join("^%"), 365);
-      }
-
-      this.searchMyKeyword(myKeywords.reverse());
-    },
-
-    searchMyKeyword: function (myKeywords) {
-      var str = "<li class=\"tit\"><div class=\"ttxt\">내가 찾은 검색어</div></li>";
-
-      for (var i = 0; i < myKeywords.length; i++) {
-        if (myKeywords[i] == "")  continue;
-        str += "<li class=\"searchkey\"><a href=\"#\"  @click=\"goKeywordSearch('" + myKeywords[i] + "')\">" + myKeywords[i] + "</a><a href=\"#\" class=\"btn_del\" @click=\"removeMyKeyword('" + myKeywords[i] + "')\" ></a></li>";
-      }
-      this.mySearchKeyword = str;
-    },
-
-    removeMyKeyword: function (keyword) {
-      alert("1")
-      var myKeyword = this.getCookie("mySearchKeyword");
-      if( myKeyword == null) {
-        myKeyword = "";
-      }
-
-      var myKeywords = myKeyword.split("^%");
-
-      var i = 0;
-      while (i < myKeywords.length) {
-        if (myKeywords[i] == keyword) {
-          myKeywords.splice(i, 1);
-        } else {
-          i++;
-        }
-      }
-
-      this.setCookie("mySearchKeyword", myKeywords.join("^%"), 365);
-
-      this.searchMyKeyword(myKeywords);
-    }
 
   },
   created() {
     this.goSearch()
   },
   watch: {
-    query: function () {
-      this.$refs.autoQuery.reciveQuery(this.query);
+    setQuery: function () {
+      this.$refs.autoQuery.getQuery(this.setQuery);
+    },
+    sfieldList: function() {
+      this.sfieldTOTAL = (this.sfieldList.length > 0) ? false : true
+
     }
+
+  },
+  mounted() {
+    //created()에서 자식 함수를 호출하면 호출X
+    this.$refs.appSide.getSearchMyKeyword(this.query, this.totalCount)
   }
 
 }

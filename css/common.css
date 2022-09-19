@@ -45,7 +45,7 @@ body { min-width:320px; font-size: 13px; color: #555; line-height: 1.2em; font-f
 h1 { margin:0; }
 h2 { margin:0; font-size:36px; font-weight:700; color:#333; line-height:1.4em; }
 h3 { margin:0; font-size:30px; font-weight:700; color:#333; line-height:1.4em; }
-h4 { margin:0; font-size:18px; font-weight:700; color:#333; line-height:1.4em; }
+h4 { margin:0; font-size:18px; font-weight:700; color:#333; }
 h5 { margin:0; font-size:15px; font-weight:700; color:#333; line-height:1.4em; }
 h6 { margin:0; font-size:14px; font-weight:700; color:#333; line-height:1.4em; }
 fieldset { border: 0; margin: 15px; padding-left: 30px; }
@@ -131,7 +131,7 @@ p.common-field-guide { margin-top:4px; }
 /* label 간격 */
 label { display:inline-block; vertical-align:middle; font-weight:700; }
 label + label { margin-left:30px; }
-input + label { margin-left:10px; font-size:130%; }
+input + label { margin-left:5px; font-size:110%; }
 input + label.default-label { margin-left:3px; }
 select + label { margin-left:30px; }
 select + label.default-label { margin-left:3px; }
@@ -1294,7 +1294,8 @@ lnb-icon
 .portal-search .portal-search-field .portal-search-key { width:560px; padding-top:7px; padding-bottom:7px; }
 .portal-search .portal-search-field .portal-search-filter { margin-bottom:15px; margin-left:10px;}
 .portal-result strong { color:#ffffff; }
-.portal-result em { color:#1970bb; }
+.portal-result .portal-result-header em { color:#1970bb; }
+.portal-result em { color:#bb1919; }
 .portal-result .portal-result-length { font-size:18px; font-weight:700; line-height:1.6em; }
 .portal-result .common-tabgroup { margin-top:26px; }
 .portal-result .portal-result-list { position:relative; margin-top:40px; }
@@ -1334,15 +1335,19 @@ lnb-icon
 .portal-tox-result .portal-result-list .common-list-none { margin-top:8px; border-top:2px solid #747474; }
 
 /* 상세버튼 클릭 시 */
-.searchbox .detailbox{position:relative;width:960px;margin:0 auto;padding-bottom:40px;}
-.searchbox .detailbox .innerbox{padding:26px 39px 22px;background-color:#ffffff;border:1px solid #999999;}
-.searchbox .detailbox .detail_close{position:absolute; top:30px; right:30px; width:22px; height:21px; background-repeat:no-repeat; background-position:center center; background-image:url(../images/common/detail_close.png); margin:0; padding:0; color:transparent; font-size:0;}
-.searchbox .detailbox .innerbox .listbox{overflow: hidden; margin-bottom:15px; height:40px; }
-.searchbox .detailbox .innerbox .listbox .item{display: inline-block;  }
-.searchbox .detailbox .innerbox .listbox .item.text{display: inline-block; font-size:120%; }
-.searchbox .detailbox .innerbox .listbox .item.title{margin-right:35px; }
-.searchbox .detailbox .innerbox .listbox .item.cal.calendar{width:400px;}
-.searchbox .detailbox .innerbox .listbox .item.cal.text{position:relative; top:-4px;}
+.detailbox{position:relative;width:960px;margin:0 auto;padding-bottom:40px;}
+.detailbox .innerbox{padding:26px 39px 0px;background-color:#fcfcfc;border:1px solid #dfdfdf;}
+.detailbox .detail_close{position:absolute; top:30px; right:30px; width:22px; height:21px; background-repeat:no-repeat; background-position:center center; background-image:url(../images/common/detail_close.png); margin:0; padding:0; color:transparent; font-size:0;}
+.detailbox .innerbox .listbox{overflow: hidden; margin-bottom:15px; height:auto; }
+.detailbox .innerbox .listbox .item{display: inline-block;  }
+.detailbox .innerbox .listbox .item.list{margin-bottom: 20px; width: 100%;}
+.detailbox .innerbox .listbox .item.list .sDate{padding: 2px 0px 2px;}
+.detailbox .innerbox .listbox .item.list .eDate{padding: 2px 0px 2px; margin-right: 10px;}
+.detailbox .innerbox .listbox .item.list label{margin-right: 15px;}
+.detailbox .innerbox .listbox .item.text{display: inline-block; font-size:120%; }
+.detailbox .innerbox .listbox .item.title{margin-right:35px;}
+.detailbox .innerbox .listbox .item.cal.calendar{width:400px;}
+.detailbox .innerbox .listbox .item.cal.text{position:relative; top:-4px;}
 
 .sd_input input[type="checkbox"]+label{position:relative;padding-left:29px;font-size:16px;color:#111;letter-spacing:0;line-height:40px;min-height:24px;}
 

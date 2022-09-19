@@ -9,9 +9,10 @@
 
             <li v-for="(item,i) in result" v-bind:key="i">
                 <h5 v-html="item.subject"></h5>
-                <p v-html="item.body"></p>
+                <p v-html="item.content"></p>
                 <div class="result-list-category">
-                    <span v-html="item.acct_year"></span>
+                    <span v-html="item.file_nm"></span> <br>
+                    [<span v-html="item.acct_year"></span>]
                 </div>
             </li>
         </ul>
